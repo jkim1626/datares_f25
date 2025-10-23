@@ -1,0 +1,7 @@
+requirements.txt
+venv/
+.env
+pycache/
+__pycache__/*.pyc
+.DS_Store
+data/
