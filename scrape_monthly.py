@@ -2,13 +2,12 @@ import argparse, os, re, time, hashlib, json
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
-
 import requests
 from bs4 import BeautifulSoup
 from dateutil.parser import parse as parse_dt
 from tqdm import tqdm
 
-# ---------- SITE CONSTANTS (adjustable if State.gov changes) ----------
+# Site Constants
 ROOT = "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-statistics.html"
 KEY_TEXT_IV  = "Monthly Immigrant Visa (IV) Issuances"      # anchor text to IV landing
 KEY_TEXT_NIV = "Monthly Nonimmigrant Visa (NIV) Issuances"   # anchor text to NIV landing
@@ -31,9 +30,7 @@ BASE_DIR = Path(__file__).resolve().parent
 DOWNLOAD_ROOT = BASE_DIR / "data" / "visa-statistics" / "monthly"
 MANIFEST_PATH = BASE_DIR / "visa_monthlies_manifest.json"
 
-# ------------------------------------------------------------
-# DATA STRUCTURE
-# ------------------------------------------------------------
+# Data Class
 @dataclass
 class Record:
     url: str
@@ -47,10 +44,7 @@ class Record:
     variant: str     # by-fsc | by-post | by-nationality
     downloaded_at: str
 
-
-# ------------------------------------------------------------
-# UTILS
-# ------------------------------------------------------------
+# Util functions
 def log(msg): print(f"[monthly] {msg}", flush=True)
 
 def get(session, url, stream=False, attempts=MAX_RETRIES):
@@ -204,10 +198,6 @@ def ensure_month_pairs(found_by_variant, expect_variants, label):
     if missing:
         log(f"WARNING: {label} missing variants: {', '.join(missing)}")
 
-
-# ------------------------------------------------------------
-# MAIN
-# ------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--delay", type=float, default=POLITE_DELAY)

@@ -8,9 +8,7 @@ from bs4 import BeautifulSoup
 from dateutil.parser import parse as parse_dt
 from tqdm import tqdm
 
-# ------------------------------------------------------------
-# CONFIG
-# ------------------------------------------------------------
+# Configs
 ROOT = "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-statistics.html"
 ANNUAL_INDEX_HINT = "/legal/visa-law0/visa-statistics/annual-reports.html"
 
@@ -26,9 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent
 DOWNLOAD_ROOT = BASE_DIR / "data" / "visa-statistics" / "annual" / "visa-office-report"
 MANIFEST_PATH = BASE_DIR / "visa_annual_manifest.json"
 
-# ------------------------------------------------------------
-# DATA STRUCTURE
-# ------------------------------------------------------------
+# Data Class
 @dataclass
 class Record:
     url: str
@@ -40,10 +36,9 @@ class Record:
     downloaded_at: str
 
 
-# ------------------------------------------------------------
-# HTTP + HELPERS
-# ------------------------------------------------------------
-def log(msg): print(f"[annual] {msg}", flush=True)
+# HTTP + Helpers
+def log(msg): 
+    print(f"[annual] {msg}", flush=True)
 
 def get(session, url, stream=False, attempts=MAX_RETRIES):
     backoff = 1.0
@@ -80,12 +75,10 @@ def load_manifest():
         return json.loads(MANIFEST_PATH.read_text())
     return {"records": [], "_url_meta": {}}
 
-def save_manifest(m): MANIFEST_PATH.write_text(json.dumps(m, indent=2))
+def save_manifest(m): 
+    MANIFEST_PATH.write_text(json.dumps(m, indent=2))
 
-
-# ------------------------------------------------------------
-# PAGE DISCOVERY
-# ------------------------------------------------------------
+# Page Parsing
 def find_annual_overview(session):
     """
     Find the 'Annual Reports' overview page that lists 'Report of the Visa Office {YEAR}' links.
@@ -154,10 +147,7 @@ def list_files_for_fy(session, fy_url):
         seen.add(r[0]); uniq.append(r)
     return uniq
 
-
-# ------------------------------------------------------------
-# DOWNLOAD LOGIC
-# ------------------------------------------------------------
+# Download Logic
 def check_changed(session, url, manifest):
     h = head(session, url)
     if not h: return True  # allow once if HEAD fails
@@ -185,10 +175,6 @@ def stream_download(session, url, dest):
         ts = time.strftime("%Y-%m-%dT%H:%M:%S%z")
     return sha.hexdigest(), size, ts
 
-
-# ------------------------------------------------------------
-# MAIN
-# ------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--delay", type=float, default=POLITE_DELAY)

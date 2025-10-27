@@ -1,0 +1,9 @@
+.git
+**/__pycache__
+**/*.pyc
+.venv
+.env
+data
+outputs
+notebooks
+.DS_Store
