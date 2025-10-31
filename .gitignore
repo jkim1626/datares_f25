@@ -5,3 +5,5 @@ pycache/
 __pycache__/*.pyc
 .DS_Store
 data/
+new_test/
+team_test/
