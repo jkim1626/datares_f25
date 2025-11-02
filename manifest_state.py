@@ -213,3 +213,49 @@ class ManifestState:
         }
         self._append_row_atomic(row)
         return final_path
+
+    def register_existing_file(self, period: str, url: str, file_path: str) -> bool:
+        """
+        Register an existing file in the manifest without downloading.
+        Calculates hash and adds manifest entry.
+        
+        Returns True if registered, False if already in manifest or file doesn't exist.
+        """
+        key = (period, url)
+        
+        # Already in manifest
+        if key in self.index:
+            return False
+        
+        file_path = Path(file_path)
+        if not file_path.exists():
+            return False
+        
+        # Calculate hash and size
+        h = hashlib.sha256()
+        size = 0
+        with file_path.open("rb") as f:
+            while chunk := f.read(65536):
+                h.update(chunk)
+                size += len(chunk)
+        
+        sha256 = h.hexdigest()
+        now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        
+        row = {
+            "source_id": self.source_id,
+            "period": period,
+            "url": url,
+            "filename": file_path.name,
+            "saved_path": str(file_path.resolve()),
+            "bytes": str(size),
+            "sha256": sha256,
+            "etag": "",
+            "last_modified": "",
+            "version": "1",
+            "downloaded_at": now,
+        }
+        
+        self._append_row_atomic(row)
+        log.info(f"Registered existing file: {period} | {url} -> {file_path}")
+        return True

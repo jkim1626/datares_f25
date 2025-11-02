@@ -148,6 +148,17 @@ def main():
                         logger.info(f"[skipped] {year} {file_url} ({decision['reason']})")
                         continue
 
+                    # Check if file already exists
+                    ydir = year_dir(OUTDIR, year)
+                    url_name = file_url.split("?")[0].rstrip("/").split("/")[-1] or f"{year}.bin"
+                    expected_path = ydir / url_name
+                    
+                    if expected_path.exists() and (year, file_url) not in state.index:
+                        if state.register_existing_file(year, file_url, str(expected_path)):
+                            counts["downloaded"] += 1
+                            logger.info(f"[registered] {year} {file_url} -> {expected_path}")
+                        continue
+                    
                     versioned = (decision["decision"] == "version")
                     saved = state.download_and_record(
                         session, file_url, outdir=str(ydir), period=year, versioned=versioned

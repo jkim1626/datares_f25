@@ -124,7 +124,6 @@ def extract_period(text: str, href: str) -> str:
         return f"FY{year}"
     return "misc"
 
-
 def find_anchor_by_text(soup: BeautifulSoup, text_substring: str):
     for a in soup.find_all("a"):
         if text_substring.lower() in (a.get_text() or "").strip().lower():
@@ -132,7 +131,6 @@ def find_anchor_by_text(soup: BeautifulSoup, text_substring: str):
             if href:
                 return urljoin(ROOT, href)
     return None
-
 
 def discover_monthly_files(session: requests.Session):
     """
@@ -175,7 +173,6 @@ def discover_monthly_files(session: requests.Session):
 
     return results
 
-
 def period_to_dir(base: Path, program: str, period: str) -> Path:
     # Extract fiscal year from period (e.g., "FY2018-10" -> "FY2018")
     fy_match = re.match(r"(FY\d{4})", period)
@@ -184,7 +181,6 @@ def period_to_dir(base: Path, program: str, period: str) -> Path:
         return base / program / fiscal_year / period
     else:
         return base / program / period
-
 
 # Main
 def main():
@@ -209,10 +205,21 @@ def main():
                 logger.info(f"[skipped] {period} {file_url} ({decision['reason']})")
                 continue
 
+            # Check if file already exists in expected location
+            pdir = period_to_dir(OUTDIR, program, period)
+            url_name = file_url.split("?")[0].rstrip("/").split("/")[-1] or f"{period}.bin"
+            expected_path = pdir / url_name
+            
+            if expected_path.exists() and (period, file_url) not in state.index:
+                # File exists but not in manifest - register it
+                if state.register_existing_file(period, file_url, str(expected_path)):
+                    counts["downloaded"] += 1  # or add a new "registered" count
+                    logger.info(f"[registered] {period} {file_url} -> {expected_path}")
+                continue
+
             versioned = (decision["decision"] == "version")
 
             # Ensure output directory exists for this period
-            pdir = period_to_dir(OUTDIR, program, period)
             pdir.mkdir(parents=True, exist_ok=True)
 
             saved = state.download_and_record(
