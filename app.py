@@ -1,4 +1,3 @@
-# app.py
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 import os, pathlib, subprocess
@@ -15,7 +14,6 @@ def healthz():
 @app.post("/run")
 def run_all():
     try:
-        # this calls your wrapper that runs monthly then yearly
         subprocess.check_call(["python", "run_all.py"])
         return {"status": "success"}
     except subprocess.CalledProcessError as e:
