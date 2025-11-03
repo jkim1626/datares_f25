@@ -68,7 +68,6 @@ def retrying_get(session: requests.Session, url: str, *, timeout=(10, 30), strea
             logger.warning(f"GET retry {i+1} for {url}: {e}")
             time.sleep(backoff); backoff *= 2
 
-
 # Parsing Helpers
 MONTHS = {
     "january":1,"february":2,"march":3,"april":4,"may":5,"june":6,

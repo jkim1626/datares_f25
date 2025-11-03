@@ -1,9 +1,35 @@
-.git
-**/__pycache__
-**/*.pyc
-.venv
+# Ignore Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore local environment
+venv/
 .env
-data
-outputs
-notebooks
+.env.*
+*.env
+
+# Ignore large data directories
+data/
+logs/
+state/
+
+# Git / system files
+.git
+.gitignore
 .DS_Store
+
+# Local development files
+*.log
+*.swp
+*.bak
+*.tmp
+*.zip
+*.tar
+*.gz
+*.ipynb_checkpoints
+
+# IDE / editor
+.vscode/
+.idea/
