@@ -1,28 +1,38 @@
-from re import sub
-import subprocess, os
+import subprocess
 import sys
+import os
 
-# Ensure ./data exists (both locally and in container)
-os.makedirs("./data", exist_ok=True)
+# Ensure base directories exist
+os.makedirs("/data/visa_stats", exist_ok=True)
 
-# Ensure ./data/visa_statistics exists
-os.makedirs("./data/visa_statistics", exist_ok=True)
+print("=" * 60)
+print("Starting visa statistics scraper pipeline")
+print("=" * 60)
 
+# Step 1: Reconcile manifest with disk
+print("\n[1/3] Reconciling manifest with disk files...")
 try:
     subprocess.check_call(["python", "crawl.py"])
 except subprocess.CalledProcessError as e:
-    print(f"crawl.py failed: {e}", file=sys.stderr)
-    sys.exit(1)
+    print(f"⚠️  crawl.py failed: {e}", file=sys.stderr)
+    print("Continuing with scraping anyway...", file=sys.stderr)
 
-# Run monthly then yearly; fail if either errors
+# Step 2: Scrape monthly files
+print("\n[2/3] Scraping monthly visa statistics...")
 try:
     subprocess.check_call(["python", "scrape_monthly.py"])
 except subprocess.CalledProcessError as e:
-    print(f"scrape_monthly.py failed: {e}", file=sys.stderr)
+    print(f"❌ scrape_monthly.py failed: {e}", file=sys.stderr)
     sys.exit(1)
 
-try:    
+# Step 3: Scrape annual files
+print("\n[3/3] Scraping annual visa statistics...")
+try:
     subprocess.check_call(["python", "scrape_yearly.py"])
 except subprocess.CalledProcessError as e:
-    print(f"scrape_yearly.py failed: {e}", file=sys.stderr)
+    print(f"❌ scrape_yearly.py failed: {e}", file=sys.stderr)
     sys.exit(1)
+
+print("\n" + "=" * 60)
+print("✅ Pipeline complete!")
+print("=" * 60)

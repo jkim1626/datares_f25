@@ -1,51 +1,31 @@
-import logging, re, time
+import logging
+import re
+import time
 from pathlib import Path
 from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
-from manifest_state import ManifestState
+from db_manifest import DBManifest
+from paths import get_annual_outdir
+
+# Configure logging to stdout for Railway
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 # Configs
 ROOT = "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-statistics.html"
 INDEX_ANCHOR_TEXT = "Report of the Visa Office"
 FILE_EXTS = (".pdf", ".xlsx", ".xls", ".csv")
 
-OUTDIR = Path("data/visa_statistics/annual")                  # files saved to data/annual/<YEAR>/
-MANIFEST = "state/annual_manifest.csv"
-MODE = "safe"                                 # dedup mode
-POLITE_DELAY = 0.5
+MODE = "safe"  # dedup mode
+POLITE_DELAY = 0.5  # seconds between requests
 
-# Logging 
-def cleanup_old_logs(log_pattern, keep_count=12):
-    log_dir = Path("logs")
-    if not log_dir.exists():
-        return
-    log_files = sorted(log_dir.glob(log_pattern), reverse=True)
-    for old_log in log_files[keep_count:]:
-        old_log.unlink()
-
-def setup_logging():
-    Path("logs/annual").mkdir(parents=True, exist_ok=True)
-    cleanup_old_logs("scraper_annual_*.log", keep_count=12)
-    timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-    log_filename = f"logs/annual/scraper_annual_{timestamp}.log"
-    log = logging.getLogger()
-    log.setLevel(logging.INFO)
-    fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-    ch = logging.StreamHandler()
-    ch.setFormatter(fmt)
-    fh = logging.FileHandler(log_filename, encoding="utf-8")
-    fh.setFormatter(fmt)
-    if not any(isinstance(h, logging.StreamHandler) for h in log.handlers):
-        log.addHandler(ch)
-    if not any(isinstance(h, logging.FileHandler) for h in log.handlers):
-        log.addHandler(fh)
-    return logging.getLogger(__name__)
-
-logger = setup_logging()
 
 # Helpers
-def retry_get(session, url, stream=False, attempts=3, timeout=(10,30)):
+def retry_get(session, url, stream=False, attempts=3, timeout=(10, 30)):
     backoff = 1.0
     for i in range(attempts):
         try:
@@ -59,11 +39,14 @@ def retry_get(session, url, stream=False, attempts=3, timeout=(10,30)):
                 logger.error(f"GET failed {url}: {e}")
                 raise
             logger.warning(f"GET retry {i+1} for {url}: {e}")
-            time.sleep(backoff); backoff *= 2
+            time.sleep(backoff)
+            backoff *= 2
+
 
 def extract_year(text):
     m = re.search(r"\b(20\d{2})\b", text)
     return m.group(1) if m else None
+
 
 def discover_year_pages(session):
     """
@@ -72,6 +55,7 @@ def discover_year_pages(session):
     resp = retry_get(session, ROOT)
     soup = BeautifulSoup(resp.text, "html.parser")
     results = []
+    
     for a in soup.select("a"):
         href = a.get("href")
         if not href:
@@ -82,18 +66,25 @@ def discover_year_pages(session):
             if not year:
                 continue
             results.append((year, urljoin(ROOT, href)))
-    # deduplicate and sort newest→oldest
-    seen = set(); uniq=[]
-    for y,u in results:
-        if (y,u) in seen: continue
-        seen.add((y,u)); uniq.append((y,u))
+    
+    # Deduplicate and sort newest→oldest
+    seen = set()
+    uniq = []
+    for y, u in results:
+        if (y, u) in seen:
+            continue
+        seen.add((y, u))
+        uniq.append((y, u))
+    
     uniq.sort(key=lambda t: t[0], reverse=True)
     return uniq
+
 
 def collect_files_for_year(session, year_page_url):
     resp = retry_get(session, year_page_url)
     soup = BeautifulSoup(resp.text, "html.parser")
     links = []
+    
     for a in soup.select("a"):
         href = a.get("href")
         if not href:
@@ -101,21 +92,25 @@ def collect_files_for_year(session, year_page_url):
         abs_url = urljoin(year_page_url, href)
         if any(abs_url.lower().endswith(ext) for ext in FILE_EXTS):
             links.append(abs_url)
-    seen=set(); uniq=[]
+    
+    # Deduplicate
+    seen = set()
+    uniq = []
     for u in links:
-        if u in seen: continue
-        seen.add(u); uniq.append(u)
+        if u in seen:
+            continue
+        seen.add(u)
+        uniq.append(u)
+    
     return uniq
 
-def year_dir(base, year):
-    return base / year
 
 # Main
 def main():
-    OUTDIR.mkdir(parents=True, exist_ok=True)
-    state = ManifestState(manifest_path=MANIFEST, source_id="visastats", mode=MODE)
-
-    counts = {"downloaded":0, "versioned":0, "skipped":0, "unchanged":0, "errors":0}
+    manifest = DBManifest(source_id="visastats", file_type="annual", mode=MODE)
+    
+    counts = {"downloaded": 0, "versioned": 0, "skipped": 0, "unchanged": 0, "errors": 0}
+    
     with requests.Session() as session:
         year_pages = discover_year_pages(session)
         if not year_pages:
@@ -134,13 +129,12 @@ def main():
                 logger.warning(f"No files found on {year} page: {year_url}")
                 continue
 
-            ydir = year_dir(OUTDIR, year)
-            ydir.mkdir(parents=True, exist_ok=True)
+            ydir = get_annual_outdir(year)
             logger.info(f"{year}: {len(files)} file(s) discovered")
 
             for file_url in files:
                 try:
-                    decision = state.plan(year, file_url)
+                    decision = manifest.plan(year, file_url)
 
                     # Decision: skip (based purely on manifest/metadata)
                     if decision["decision"] == "skip":
@@ -149,18 +143,20 @@ def main():
                         continue
 
                     # Check if file already exists
-                    ydir = year_dir(OUTDIR, year)
                     url_name = file_url.split("?")[0].rstrip("/").split("/")[-1] or f"{year}.bin"
                     expected_path = ydir / url_name
-                    
-                    if expected_path.exists() and (year, file_url) not in state.index:
-                        if state.register_existing_file(year, file_url, str(expected_path)):
-                            counts["downloaded"] += 1
-                            logger.info(f"[registered] {year} {file_url} -> {expected_path}")
-                        continue
-                    
+
+                    if expected_path.exists():
+                        existing = manifest.get_existing(year, file_url)
+                        if not existing:
+                            # File exists but not in manifest - register it
+                            if manifest.register_existing_file(year, file_url, str(expected_path)):
+                                counts["downloaded"] += 1
+                                logger.info(f"[registered] {year} {file_url} -> {expected_path}")
+                            continue
+
                     versioned = (decision["decision"] == "version")
-                    saved = state.download_and_record(
+                    saved = manifest.download_and_record(
                         session, file_url, outdir=str(ydir), period=year, versioned=versioned
                     )
 
@@ -178,6 +174,7 @@ def main():
                 except Exception as e:
                     counts["errors"] += 1
                     logger.error(f"[error] {year} {file_url} ({e})")
+                
                 time.sleep(POLITE_DELAY)
 
     logger.info(
@@ -185,6 +182,7 @@ def main():
         f"downloaded={counts['downloaded']}, new_versions={counts['versioned']}, "
         f"skipped={counts['skipped']}, unchanged={counts['unchanged']}, errors={counts['errors']}"
     )
+
 
 if __name__ == "__main__":
     main()
