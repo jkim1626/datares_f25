@@ -6,7 +6,6 @@ __pycache__/
 
 # Ignore local environment
 venv/
-.env
 .env.*
 *.env
 
