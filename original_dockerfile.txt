@@ -22,5 +22,5 @@ ENV DATA_ROOT=/data
 # Create data directory (Railway volume will mount over this)
 RUN mkdir -p /data/visa_stats
 
-# Run initialization and TEST pipeline (only 2 files)
-CMD python init_db.py && python test_run_all.py
+# Run initialization and scraping
+CMD python init_db.py && python run_all.py
