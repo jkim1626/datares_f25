@@ -10,7 +10,8 @@ import psycopg
 from psycopg.rows import dict_row
 
 # Load environment variables from .env file
-import load_env
+from dotenv import load_dotenv
+load_dotenv()
 
 DEFAULT_TIMEOUT = (10, 30)  # connect, read
 RETRY_STATUSES = {429, 500, 502, 503, 504}
@@ -29,7 +30,7 @@ class DBManifest:
         self.mode = mode.lower().strip()  # "fast" | "safe"
         
         # Get database URL from Railway environment
-        self.db_url = os.environ.get("DATABASE_URL")
+        self.db_url = os.getenv("DATABASE_URL")
         if not self.db_url:
             raise RuntimeError("DATABASE_URL environment variable not set")
     

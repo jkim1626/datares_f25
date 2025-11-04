@@ -5,15 +5,16 @@ Demonstrates common use cases for querying downloaded files.
 """
 
 import os
+from dotenv import load_dotenv
 import psycopg
 from psycopg.rows import dict_row
 
 # Load environment variables from .env file
-import load_env
+load_dotenv()
 
 def get_connection():
     """Get database connection."""
-    db_url = os.environ.get("DATABASE_URL")
+    db_url = os.getenv("DATABASE_URL")
     if not db_url:
         raise RuntimeError("DATABASE_URL not set")
     return psycopg.connect(db_url, row_factory=dict_row)

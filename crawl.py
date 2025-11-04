@@ -5,7 +5,8 @@ import psycopg
 from psycopg.rows import dict_row
 
 # Load environment variables from .env file
-import load_env
+from dotenv import load_dotenv
+load_dotenv()
 
 # Configure logging to stdout for Railway
 logging.basicConfig(
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 def get_db_connection():
     """Get database connection from Railway environment."""
-    db_url = os.environ.get("DATABASE_URL")
+    db_url = os.getenv("DATABASE_URL")
     if not db_url:
         raise RuntimeError("DATABASE_URL environment variable not set")
     return psycopg.connect(db_url, row_factory=dict_row)

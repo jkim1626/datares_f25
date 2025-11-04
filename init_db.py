@@ -9,7 +9,8 @@ import sys
 import psycopg
 
 # Load environment variables from .env file
-import load_env
+from dotenv import load_dotenv
+load_dotenv()
 
 def get_schema_sql():
     """Read the schema SQL file."""
@@ -26,7 +27,7 @@ def init_database():
     """Initialize the database with schema (idempotent - safe to run multiple times)."""
     
     # Get database URL from environment
-    db_url = os.environ.get("DATABASE_URL")
+    db_url = os.getenv("DATABASE_URL")
     if not db_url:
         print("❌ Error: DATABASE_URL environment variable not set")
         print("\nTo fix this:")
