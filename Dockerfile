@@ -23,4 +23,4 @@ ENV DATA_ROOT=/data
 RUN mkdir -p /data/visa_stats
 
 # Run initialization and TEST pipeline 
-CMD python init_db.py && python test_run_all.py
+CMD python reset.py && python init_db.py && python test_run_all.py
