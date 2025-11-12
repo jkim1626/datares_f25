@@ -34,8 +34,8 @@ def scan_volume_files(base_path: Path):
         logger.warning(f"Base path does not exist: {base_path}")
         return files_on_disk
     
-    # Scan for all files (pdf, xlsx, xls, csv)
-    for ext in ["*.pdf", "*.xlsx", "*.xls", "*.csv"]:
+    # Scan for all files (pdf, xlsx, xls, csv, docx, doc, zip)
+    for ext in ["*.pdf", "*.xlsx", "*.xls", "*.csv", "*.docx", "*.doc", "*.zip"]:
         for file_path in base_path.rglob(ext):
             # Skip temp directories
             if ".tmp" in str(file_path):
@@ -52,7 +52,7 @@ def scan_volume_files(base_path: Path):
 
 def reconcile_manifest():
     """
-    Reconcile the Postgres manifest with files on disk:
+    Reconcile the Postgres manifest with files on disk across all data sources:
     1. Mark files in manifest but missing on disk as 'missing'
     2. Keep track of files on disk not in manifest (info only)
     """
@@ -61,7 +61,7 @@ def reconcile_manifest():
     # Get all active files from manifest
     with conn.cursor() as cur:
         cur.execute("""
-            SELECT id, saved_path, period, url, file_type, program
+            SELECT id, saved_path, period, url, source_id, file_type, program
             FROM file_manifest
             WHERE status = 'active'
         """)
@@ -69,11 +69,22 @@ def reconcile_manifest():
     
     logger.info(f"Found {len(manifest_files)} active files in manifest")
     
-    # Scan volume for actual files
-    base_path = Path(os.environ.get("DATA_ROOT", "/data")) / "visa_stats"
-    files_on_disk = scan_volume_files(base_path)
+    # Scan volumes for actual files across all data sources
+    data_root = Path(os.environ.get("DATA_ROOT", "/data"))
     
-    logger.info(f"Found {len(files_on_disk)} files on disk")
+    data_dirs = [
+        data_root / "visa_stats",
+        data_root / "performance_data",
+        data_root / "immigration_yearbook",
+        data_root / "uscis_data",
+    ]
+    
+    files_on_disk = {}
+    for data_dir in data_dirs:
+        if data_dir.exists():
+            files_on_disk.update(scan_volume_files(data_dir))
+    
+    logger.info(f"Found {len(files_on_disk)} files on disk across all data sources")
     
     # Check manifest entries against disk
     missing_count = 0
@@ -86,8 +97,8 @@ def reconcile_manifest():
             # File in manifest but not on disk - mark as missing
             missing_count += 1
             logger.warning(
-                f"Missing file: {record['file_type']} | {record.get('program', 'N/A')} | "
-                f"{record['period']} | {saved_path}"
+                f"Missing file: {record['source_id']} | {record['file_type']} | "
+                f"{record.get('program', 'N/A')} | {record['period']} | {saved_path}"
             )
             
             with conn.cursor() as cur:
@@ -116,9 +127,24 @@ def reconcile_manifest():
         if len(untracked_files) > 10:
             logger.info(f"  ... and {len(untracked_files) - 10} more")
     
+    # Summary by source
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT source_id, file_type, COUNT(*) as count
+            FROM file_manifest
+            WHERE status = 'active'
+            GROUP BY source_id, file_type
+            ORDER BY source_id, file_type
+        """)
+        active_by_source = cur.fetchall()
+    
+    logger.info("\nActive files by source:")
+    for row in active_by_source:
+        logger.info(f"  {row['source_id']}/{row['file_type']}: {row['count']} files")
+    
     # Summary
     logger.info(
-        f"Reconciliation complete: "
+        f"\nReconciliation complete: "
         f"found={found_count}, marked_missing={missing_count}, "
         f"untracked_on_disk={len(untracked_files)}"
     )
@@ -127,7 +153,8 @@ def reconcile_manifest():
 
 
 def main():
-    logger.info("Starting manifest reconciliation...")
+    logger.info("Starting manifest reconciliation for all data sources...")
+    logger.info("Checking: visa_stats, performance_data, immigration_yearbook, uscis_data")
     
     try:
         reconcile_manifest()

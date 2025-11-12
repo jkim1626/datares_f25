@@ -18,15 +18,25 @@ RETRY_STATUSES = {429, 500, 502, 503, 504}
 
 class DBManifest:
     """
-    PostgreSQL-based manifest for tracking downloaded files.
+    PostgreSQL-based manifest for tracking downloaded files across all data sources.
+    
     Modes:
       - fast:  skip if (period,url) exists (no network checks)
       - safe:  if exists, do HEAD/conditional-GET; hash+version if content differs
     """
     def __init__(self, source_id: str, file_type: str, mode: str = "safe", program: Optional[str] = None):
+        """
+        Initialize manifest for a specific data source.
+        
+        Args:
+            source_id: Data source identifier (e.g., "visastats", "dolstats", "dhsyearbook", "uscis")
+            file_type: Type of files (e.g., "monthly", "annual", "dol", "yearbook", "uscis")
+            mode: Deduplication mode - "fast" or "safe"
+            program: Optional program/category (e.g., "IV", "NIV", "PERM", "h1b", etc.)
+        """
         self.source_id = source_id
-        self.file_type = file_type  # "monthly" or "annual"
-        self.program = program      # "IV" or "NIV" (for monthly only)
+        self.file_type = file_type
+        self.program = program
         self.mode = mode.lower().strip()  # "fast" | "safe"
         
         # Get database URL from Railway environment
@@ -322,12 +332,12 @@ class DBManifest:
         return True
     
     def get_all_active_files(self) -> list[Dict]:
-        """Get all active files for this file_type from manifest."""
+        """Get all active files for this source_id from manifest."""
         with self._get_conn() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
                     SELECT * FROM file_manifest 
-                    WHERE file_type = %s AND status = 'active'
+                    WHERE source_id = %s AND status = 'active'
                     ORDER BY period, url
-                """, (self.file_type,))
+                """, (self.source_id,))
                 return cur.fetchall()
