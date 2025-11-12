@@ -21,6 +21,12 @@ def init_database():
     # Execute schema
     with psycopg.connect(db_url) as conn:
         with conn.cursor() as cur:
+            # Drop old views first (they may have different columns)
+            print("Dropping old views if they exist...")
+            cur.execute("DROP VIEW IF EXISTS active_files_summary CASCADE;")
+            cur.execute("DROP VIEW IF EXISTS missing_files CASCADE;")
+            cur.execute("DROP VIEW IF EXISTS recent_downloads CASCADE;")
+            
             print("Executing schema...")
             cur.execute(schema_sql)
         conn.commit()
