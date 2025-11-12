@@ -27,6 +27,21 @@ def init_database():
             cur.execute("DROP VIEW IF EXISTS missing_files CASCADE;")
             cur.execute("DROP VIEW IF EXISTS recent_downloads CASCADE;")
             
+            # # Check if table exists and needs migration
+            # cur.execute("""
+            #     SELECT column_name, character_maximum_length
+            #     FROM information_schema.columns
+            #     WHERE table_name = 'file_manifest' AND column_name = 'program'
+            # """)
+            # result = cur.fetchone()
+            
+            # if result and result[1] and result[1] < 100:
+            #     print(f"Migrating program column from VARCHAR({result[1]}) to VARCHAR(100)...")
+            #     cur.execute("""
+            #         ALTER TABLE file_manifest 
+            #         ALTER COLUMN program TYPE VARCHAR(100)
+            #     """)
+
             print("Executing schema...")
             cur.execute(schema_sql)
         conn.commit()

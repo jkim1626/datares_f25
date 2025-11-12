@@ -72,7 +72,7 @@ def extract_zip_file(zip_path: Path):
 def discover_yearbooks(session: requests.Session) -> list:
     """
     Discover ALL available yearbooks from the website.
-    Returns list of dicts: {"year": int, "url": str}
+    Returns list of dicts: {"year": str, "url": str}
     """
     r = retrying_get(session, ROOT)
     soup = BeautifulSoup(r.text, "html.parser")
@@ -87,7 +87,7 @@ def discover_yearbooks(session: requests.Session) -> list:
         # Try to extract year from URL pattern: /yearbook/YYYY or /yearbook/YYYY-YYYY
         url_year_match = re.search(r"/yearbook/(\d{4})(?:-\d{4})?/?$", href)
         if url_year_match:
-            year = int(url_year_match.group(1))
+            year = str(url_year_match.group(1))  # FIXED: Keep as string
             absolute_url = urljoin(ROOT, href)
             yearbooks[year] = {
                 "year": year,
@@ -98,7 +98,7 @@ def discover_yearbooks(session: requests.Session) -> list:
         # Try to extract year from text pattern: "Yearbook YYYY" or "Yearbook YYYY to YYYY"
         text_year_match = re.search(r"Yearbook\s+(\d{4})(?:\s+to\s+\d{4})?", text, re.I)
         if text_year_match:
-            year = int(text_year_match.group(1))
+            year = str(text_year_match.group(1))  # FIXED: Keep as string
             if year not in yearbooks:
                 absolute_url = urljoin(ROOT, href)
                 yearbooks[year] = {
@@ -189,7 +189,7 @@ def main():
         for link in links:
             filename = link["filename"]
             file_url = link["url"]
-            period = str(year)
+            period = str(year)  # FIXED: Ensure period is string
             
             try:
                 decision = manifest.plan(period, file_url)

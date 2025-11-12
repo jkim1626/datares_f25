@@ -32,7 +32,7 @@ def main():
     
     # Use first yearbook
     yb = yearbooks[0]
-    year = yb["year"]
+    year = yb["year"]  # Now correctly a string
     yearbook_url = yb["url"]
     
     logger.info(f"\n🧪 TEST: Using ONLY first yearbook: {year}")
@@ -52,7 +52,7 @@ def main():
     link = links[0]
     filename = link["filename"]
     file_url = link["url"]
-    period = str(year)
+    period = str(year)  # FIXED: Ensure period is string
     
     logger.info(f"🧪 TEST: Downloading ONLY first file:")
     logger.info(f"   Year: {year}")
@@ -67,7 +67,7 @@ def main():
             logger.info("\n✅ File already exists in database!")
             return
         
-        ydir = get_yearbook_outdir(year)
+        ydir = get_yearbook_outdir(year)  # Now works because year is a string
         expected_path = ydir / filename
         
         if expected_path.exists():

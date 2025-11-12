@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS file_manifest (
     -- Identification
     source_id VARCHAR(100) NOT NULL,           -- e.g., "visastats", "dolstats", "dhsyearbook", "uscis"
     file_type VARCHAR(20) NOT NULL,            -- "monthly", "annual", "dol", "yearbook", "uscis"
-    program VARCHAR(50),                       -- "IV", "NIV", "PERM", "h1b", etc. (NULL if not applicable)
+    program VARCHAR(100),                       -- "IV", "NIV", "PERM Program", "h1b", etc. (NULL if not applicable)
     period VARCHAR(100) NOT NULL,              -- "FY2024-10", "2024", "PERM/2024", "h1b/2024", etc.
     
     -- Source info
