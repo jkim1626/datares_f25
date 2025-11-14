@@ -22,4 +22,4 @@ ENV DATA_ROOT=/data
 # Run TEST pipeline (change to run_all.py for full load)
 # For testing: CMD python test_run_all.py
 # For full load: CMD python run_all.py
-CMD python test_run_all.py
+CMD python run_all.py
