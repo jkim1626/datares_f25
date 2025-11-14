@@ -34,6 +34,7 @@ class DBManifest:
             mode: Deduplication mode - "fast" or "safe"
             program: Optional program/category (e.g., "IV", "NIV", "PERM", "h1b", etc.)
         """
+        self._conn = None
         self.source_id = source_id
         self.file_type = file_type
         self.program = program
@@ -45,8 +46,10 @@ class DBManifest:
             raise RuntimeError("DATABASE_URL environment variable not set")
     
     def _get_conn(self):
-        """Get a new database connection."""
-        return psycopg.connect(self.db_url, row_factory=dict_row)
+        """Reuse DB connection or add connection if none exists."""
+        if self._conn is None or self._conn.closed:
+            self._conn = psycopg.connect(self.db_url, row_factory=dict_row)
+        return self._conn
     
     def _retrying_head(self, session: requests.Session, url: str):
         """HEAD request with retries."""

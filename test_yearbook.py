@@ -1,7 +1,7 @@
 import logging
 from scrape_yearbook import discover_yearbooks, get_download_links, get_session, MODE
-from db_manifest import DBManifest
-from paths import get_yearbook_outdir
+from helpers.db_manifest import DBManifest
+from helpers.paths import get_yearbook_outdir
 from pathlib import Path
 import zipfile
 

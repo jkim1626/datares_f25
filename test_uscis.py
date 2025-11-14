@@ -1,7 +1,7 @@
 import logging
 from scrape_uscis import BASE_URLS, get_download_links, get_session, MODE, make_period
-from db_manifest import DBManifest
-from paths import get_uscis_outdir
+from helpers.db_manifest import DBManifest
+from helpers.paths import get_uscis_outdir
 
 # Configure logging
 logging.basicConfig(

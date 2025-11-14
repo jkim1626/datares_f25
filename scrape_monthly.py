@@ -6,8 +6,8 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 from dateutil.parser import parse as parse_dt
-from db_manifest import DBManifest
-from paths import get_monthly_outdir
+from helpers.db_manifest import DBManifest
+from helpers.paths import get_monthly_outdir
 
 # Configure logging to stdout for Railway
 logging.basicConfig(

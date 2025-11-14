@@ -2,13 +2,24 @@ import subprocess
 import sys
 import os
 
+# Initialize database first
+print("=" * 60)
+print("Initializing database...")
+print("=" * 60)
+from helpers.init_db import init_database
+try:
+    init_database()
+except Exception as e:
+    print(f"❌ Database initialization failed: {e}", file=sys.stderr)
+    sys.exit(1)
+
 # Ensure base directories exist
 os.makedirs("/data/visa_stats", exist_ok=True)
 os.makedirs("/data/performance_data", exist_ok=True)
 os.makedirs("/data/immigration_yearbook", exist_ok=True)
 os.makedirs("/data/uscis_data", exist_ok=True)
 
-print("=" * 60)
+print("\n" + "=" * 60)
 print("TEST MODE: Complete Pipeline Test")
 print("Downloads 1 file from each data source")
 print("=" * 60)

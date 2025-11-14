@@ -1,5 +1,6 @@
 import os
 import psycopg
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,10 +11,13 @@ def init_database():
     if not db_url:
         raise RuntimeError("DATABASE_URL environment variable not set")
     
-    print("Reading schema from db_schema.sql...")
+    print("Reading schema from helpers/db_schema.sql...")
+    
+    # Get path relative to this file's location
+    schema_path = Path(__file__).parent / "db_schema.sql"
     
     # Read schema file
-    with open("db_schema.sql", "r") as f:
+    with open(schema_path, "r") as f:
         schema_sql = f.read()
     
     print("Connecting to database...")
@@ -27,21 +31,6 @@ def init_database():
             cur.execute("DROP VIEW IF EXISTS missing_files CASCADE;")
             cur.execute("DROP VIEW IF EXISTS recent_downloads CASCADE;")
             
-            # # Check if table exists and needs migration
-            # cur.execute("""
-            #     SELECT column_name, character_maximum_length
-            #     FROM information_schema.columns
-            #     WHERE table_name = 'file_manifest' AND column_name = 'program'
-            # """)
-            # result = cur.fetchone()
-            
-            # if result and result[1] and result[1] < 100:
-            #     print(f"Migrating program column from VARCHAR({result[1]}) to VARCHAR(100)...")
-            #     cur.execute("""
-            #         ALTER TABLE file_manifest 
-            #         ALTER COLUMN program TYPE VARCHAR(100)
-            #     """)
-
             print("Executing schema...")
             cur.execute(schema_sql)
         conn.commit()

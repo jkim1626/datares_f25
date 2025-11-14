@@ -2,20 +2,31 @@ import subprocess
 import sys
 import os
 
+# Initialize database first
+print("=" * 60)
+print("Initializing database...")
+print("=" * 60)
+from helpers.init_db import init_database
+try:
+    init_database()
+except Exception as e:
+    print(f"❌ Database initialization failed: {e}", file=sys.stderr)
+    sys.exit(1)
+
 # Ensure base directories exist
 os.makedirs("/data/visa_stats", exist_ok=True)
 os.makedirs("/data/performance_data", exist_ok=True)
 os.makedirs("/data/immigration_yearbook", exist_ok=True)
 os.makedirs("/data/uscis_data", exist_ok=True)
 
-print("=" * 60)
+print("\n" + "=" * 60)
 print("Starting FULL data scraper pipeline (all 5 sources)")
 print("=" * 60)
 
 # Step 1: Reconcile manifest with disk
 print("\n[1/6] Reconciling manifest with disk files...")
 try:
-    subprocess.check_call(["python", "crawl.py"])
+    subprocess.check_call(["python", "-m", "helpers.crawl"])
 except subprocess.CalledProcessError as e:
     print(f"⚠️  crawl.py failed: {e}", file=sys.stderr)
     print("Continuing with scraping anyway...", file=sys.stderr)

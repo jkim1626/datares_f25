@@ -4,8 +4,8 @@ import requests
 from bs4 import BeautifulSoup
 import zipfile
 from pathlib import Path
-from db_manifest import DBManifest
-from paths import get_yearbook_outdir
+from helpers.db_manifest import DBManifest
+from helpers.paths import get_yearbook_outdir
 
 # Configure logging to stdout for Railway
 logging.basicConfig(

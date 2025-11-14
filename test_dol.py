@@ -1,7 +1,7 @@
 import logging
 from scrape_dol import discover_files, get_session, MODE
-from db_manifest import DBManifest
-from paths import get_dol_outdir
+from helpers.db_manifest import DBManifest
+from helpers.paths import get_dol_outdir
 
 # Configure logging
 logging.basicConfig(

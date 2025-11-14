@@ -3,8 +3,8 @@ from urllib.parse import urljoin, urlparse
 from pathlib import Path
 import requests
 from bs4 import BeautifulSoup
-from db_manifest import DBManifest
-from paths import get_uscis_outdir
+from helpers.db_manifest import DBManifest
+from helpers.paths import get_uscis_outdir
 
 # Configure logging to stdout for Railway
 logging.basicConfig(

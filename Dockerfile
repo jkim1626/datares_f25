@@ -19,8 +19,7 @@ COPY . .
 ENV PYTHONUNBUFFERED=1
 ENV DATA_ROOT=/data
 
-# Create data directory (Railway volume will mount over this)
-RUN mkdir -p /data/visa_stats
-
-# Run initialization and TEST pipeline 
-CMD python reset.py && python init_db.py && python test_run_all.py
+# Run TEST pipeline (change to run_all.py for full load)
+# For testing: CMD python test_run_all.py
+# For full load: CMD python run_all.py
+CMD python test_run_all.py
