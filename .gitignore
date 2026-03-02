@@ -5,3 +5,4 @@ __pycache__/*.pyc
 new_test/
 team_test/
 __pycache__/
+data/
