@@ -23,4 +23,4 @@ ENV DATA_ROOT=/data
 # For testing: CMD python test_run_all.py
 # For full load: CMD python run_all.py
 # For dummy run: CMD echo "Hello, World!"
-CMD echo "Hello, World! Pushing to Main"
+CMD ["python", "test_run.py"]

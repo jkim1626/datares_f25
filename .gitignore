@@ -6,3 +6,9 @@ new_test/
 team_test/
 __pycache__/
 data/
+
+# PERM output files
+perm/perm_db.csv
+perm/*.csv
+perm/*.parquet
+perm/data/
