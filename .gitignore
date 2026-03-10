@@ -1,5 +1,6 @@
 venv/
 .env
+.venv
 __pycache__/*.pyc
 .DS_Store
 new_test/
@@ -12,3 +13,7 @@ perm/perm_db.csv
 perm/*.csv
 perm/*.parquet
 perm/data/
+
+# LCA output files
+lca/lca_db.csv
+lca/lca_clean.csv
